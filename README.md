@@ -1,23 +1,23 @@
-<h1 align="center">🚀 订阅检测转换工具</h1>
+<h1 align="center">🚀 订阅检测转换工具 (Enhanced with Native Telegram Proxy)</h1>
 
 <p align="center">
-	<a href="https://github.com/beck-8/subs-check/releases"><img src="https://img.shields.io/github/v/release/beck-8/subs-check?style=flat-square&include_prereleases&label=version" /></a>
-	<a href="https://github.com/beck-8/subs-check/releases"><img src="https://img.shields.io/github/downloads/beck-8/subs-check/total.svg?style=flat-square" /></a>
-  <a href="https://hub.docker.com/r/beck8/subs-check/tags"><img src="https://img.shields.io/docker/pulls/beck8/subs-check" /></a>
-	<a href="https://github.com/beck-8/subs-check/issues"><img src="https://img.shields.io/github/issues-raw/beck-8/subs-check.svg?style=flat-square&label=issues" /></a>
-	<a href="https://github.com/beck-8/subs-check/graphs/contributors"><img src="https://img.shields.io/github/contributors/beck-8/subs-check?style=flat-square" /></a>
-	<a href="https://github.com/beck-8/subs-check/blob/master/LICENSE"><img src="https://img.shields.io/github/license/beck-8/subs-check?style=flat-square" /></a>
+	<a href="https://github.com/xbajiu/subs-check/releases"><img src="https://img.shields.io/github/v/release/xbajiu/subs-check?style=flat-square&include_prereleases&label=version" /></a>
+	<a href="https://github.com/xbajiu/subs-check/pkgs/container/subs-check"><img src="https://img.shields.io/badge/docker-ghcr.io-blue?style=flat-square&logo=docker" /></a>
+	<a href="https://github.com/xbajiu/subs-check/issues"><img src="https://img.shields.io/github/issues-raw/xbajiu/subs-check.svg?style=flat-square&label=issues" /></a>
+	<a href="https://github.com/xbajiu/subs-check/blob/master/LICENSE"><img src="https://img.shields.io/github/license/xbajiu/subs-check?style=flat-square" /></a>
 </p>
 
 ---
 
-> **✨ 修复逻辑、简化操作、增加功能、节省内存、一键启动无需配置**
+> **💡 本项目基于 [beck-8/subs-check](https://github.com/beck-8/subs-check) 进行增强与定制维护：**  
+> 1. **✈️ 原生 Telegram 推送**：无需单独部署复杂的 Apprise，原生直接通过 Telegram Bot 发送节点测试结果；
+> 2. **🌐 支持 TG 推送自定义反代域名**（`proxy-tg`）：在受限网络环境或大陆机器可配置自建或公共反代域名直连推送；
+> 3. **🛡️ 智能自动同步与冲突自愈**：通过 GitHub Actions 自动跟进上游 `beck-8/subs-check` 最新功能，并自动化自愈保护自定义功能不丢失；
+> 4. **🐳 自动构建 GHCR 多架构 Docker 镜像**：提供 `ghcr.io/xbajiu/subs-check:latest` 开箱即用。
 
-> **⚠️ 注意：** 功能更新频繁，请查看最新的[配置文件](https://github.com/beck-8/subs-check/blob/master/config/config.example.yaml)以获取最新功能。  
-> **⚠️ 注意：** 如果想要查看功能更新，可以参照 [示例配置提交历史](https://github.com/beck-8/subs-check/commits/master/config/config.example.yaml),这里有变动说明有更功能/逻辑更新
+> **⚠️ 注意：** 功能更新频繁，请查看最新的[配置文件](https://github.com/xbajiu/subs-check/blob/master/config/config.example.yaml)以获取最新功能。
 
 ## 📸 预览
-
 
 ![preview](./doc/images/preview.png)  
 ![result](./doc/images/results.png)  
@@ -28,6 +28,7 @@
 
 ## ✨ 功能特性
 
+- **✈️ 原生 Telegram 推送（支持自定义反代域名，免部署 Apprise）**
 - **🔗 订阅合并**
 - **🔍 节点可用性检测**
 - **🗑️ 节点去重**
@@ -35,7 +36,7 @@
 - **🎬 流媒体平台解锁检测**
 - **✏️ 节点重命名**
 - **🔄 任意格式订阅转换**
-- **🔔 支持100+通知渠道**
+- **🔔 支持100+通知渠道（兼容原有 Apprise）**
 - **🌐 内置 Sub-Store**
 - **🖥️ WEB 控制面板**
 - **⏰ 支持 Crontab 表达式**
@@ -44,99 +45,7 @@
 ## 🛠️ 部署与使用 
 > 首次运行会在当前目录生成默认配置文件。
 
-### 🚀 一键安装（Linux）
-
-```bash
-# 默认安装
-bash <(curl -fsSL https://raw.githubusercontent.com/beck-8/subs-check/master/install.sh)
-
-# 使用 wget
-bash <(wget -qO- https://raw.githubusercontent.com/beck-8/subs-check/master/install.sh)
-
-# 如果无法访问 GitHub，可使用代理
-bash <(curl -fsSL https://ghfast.top/https://raw.githubusercontent.com/beck-8/subs-check/master/install.sh) https://ghfast.top/
-
-# Alpine 等无 bash 环境
-wget -qO /tmp/install.sh https://raw.githubusercontent.com/beck-8/subs-check/master/install.sh && sh /tmp/install.sh && rm -f /tmp/install.sh
-```
-
-<details>
-  <summary>脚本说明</summary>
-
-安装脚本会自动执行以下操作：
-1. 检测系统架构（x86_64 / aarch64 / armv7 / i386）
-2. 从 GitHub Releases 下载最新版本
-3. 安装到 `/opt/subs-check` 目录
-4. 配置 systemd 服务
-5. 交互式选择是否开机自启动
-6. 交互式选择是否立即启动
-
-**服务管理：**
-```bash
-systemctl start subs-check    # 启动
-systemctl stop subs-check     # 停止
-systemctl restart subs-check  # 重启
-systemctl status subs-check   # 状态
-journalctl -u subs-check -f   # 日志
-```
-
-**卸载方法：**
-```bash
-systemctl stop subs-check
-systemctl disable subs-check
-rm -rf /opt/subs-check /etc/systemd/system/subs-check.service
-systemctl daemon-reload
-```
-
-</details>
-
-### 🪜 代理设置（可选）
-<details>
-  <summary>展开查看</summary>
-
-如果拉取非Github订阅速度慢，可使用通用的 HTTP_PROXY HTTPS_PROXY 环境变量加快速度；此变量不会影响节点测试速度
-```bash
-# HTTP 代理示例
-export HTTP_PROXY=http://username:password@192.168.1.1:7890
-export HTTPS_PROXY=http://username:password@192.168.1.1:7890
-
-# SOCKS5 代理示例
-export HTTP_PROXY=socks5://username:password@192.168.1.1:7890
-export HTTPS_PROXY=socks5://username:password@192.168.1.1:7890
-
-# SOCKS5H 代理示例
-export HTTP_PROXY=socks5h://username:password@192.168.1.1:7890
-export HTTPS_PROXY=socks5h://username:password@192.168.1.1:7890
-```
-如果想加速github的链接，可使用网上公开的github proxy，或者使用下方自建测速地址处的worker.js自建加速
-```
-# Github Proxy，获取订阅使用，结尾要带的 /
-# github-proxy: "https://ghfast.top/"
-github-proxy: "https://custom-domain/raw/"
-```
-
-</details>
-
-### 🌐 自建测速地址（可选）
-<details>
-  <summary>展开查看</summary>
-
-> **⚠️ 注意：** 避免使用 Speedtest 或 Cloudflare 下载链接，因为部分节点会屏蔽测速网站。
-
-1. 将 [worker.js](./doc/cloudflare/worker.js) 部署到 Cloudflare Workers。
-2. 绑定自定义域名（避免被节点屏蔽）。
-3. 在配置文件中设置 `speed-test-url` 为你的 Workers 地址：
-
-```yaml
-# 100MB
-speed-test-url: https://custom-domain/speedtest?bytes=104857600
-# 1GB
-speed-test-url: https://custom-domain/speedtest?bytes=1073741824
-```
-
-</details>
-
-### 🐳 Docker 运行
+### 🐳 Docker 运行（推荐）
 
 > **⚠️ 注意：**  
 > - 限制内存请使用 `--memory="500m"`。  
@@ -151,7 +60,7 @@ docker run -d \
   -v ./config:/app/config \
   -v ./output:/app/output \
   --restart always \
-  ghcr.io/beck-8/subs-check:latest
+  ghcr.io/xbajiu/subs-check:latest
 
 # 使用代理运行
 docker run -d \
@@ -163,7 +72,7 @@ docker run -d \
   -v ./config:/app/config \
   -v ./output:/app/output \
   --restart always \
-  ghcr.io/beck-8/subs-check:latest
+  ghcr.io/xbajiu/subs-check:latest
 ```
 
 ### 📜 Docker-Compose
@@ -172,7 +81,7 @@ docker run -d \
 version: "3"
 services:
   subs-check:
-    image: ghcr.io/beck-8/subs-check:latest
+    image: ghcr.io/xbajiu/subs-check:latest
     container_name: subs-check
     volumes:
       - ./config:/app/config
@@ -188,9 +97,6 @@ services:
     restart: always
     network_mode: bridge
 ```
-### 📦 二进制文件运行
-
-下载 [Releases](https://github.com/beck-8/subs-check/releases) 中适合的版本，解压后直接运行即可。
 
 ### 🖥️ 源码运行
 
@@ -219,37 +125,11 @@ proxy-tg: "https://tgproxy.example.com"
 
 > 通过 [Apprise](https://github.com/caronc/apprise) 发送通知。
 
-### 🌐 Vercel 部署
-
-1. 点击[**此处**](https://vercel.com/new/clone?repository-url=https://github.com/beck-8/apprise_vercel)部署 Apprise。
-2. 部署后获取 API 链接，如 `https://testapprise-beck8s-projects.vercel.app/notify`。
-3. 建议为 Vercel 项目设置自定义域名`diydomain.com`（国内访问 Vercel 可能受限）。
-
-### 🐳 Docker 部署
-
-> **⚠️ 注意：** 不支持 arm/v7。
-
-```bash
-# 基础运行
-docker run --name apprise -p 8000:8000 --restart always -d caronc/apprise:latest
-
-# 使用代理运行
-docker run --name apprise \
-  -p 8000:8000 \
-  -e HTTP_PROXY=http://192.168.1.1:7890 \
-  -e HTTPS_PROXY=http://192.168.1.1:7890 \
-  --restart always \
-  -d caronc/apprise:latest
-```
-
-### 📝 配置文件中配置通知
-
 ```yaml
 # 填写搭建的apprise API server 地址
 # https://notify.xxxx.us.kg/notify
 apprise-api-server: "https://diydomain.com/notify"
 # 填写通知目标
-# 支持100+ 个通知渠道，详细格式请参照 https://github.com/caronc/apprise
 recipient-url: 
   # telegram格式：tgram://{bot_token}/{chat_id}
   # - tgram://xxxxxx/-1002149239223
@@ -324,12 +204,6 @@ http://127.0.0.1:8299/api/file/mihomo
 | `http://127.0.0.1:8199/sub/base64.txt` | Base64 格式订阅 |从上方sub-store转换下载后提供|
 | `http://127.0.0.1:8199/export/surge` 等 | Surge / Loon / Quantumult X / Shadowrocket / Stash / Surfboard / Egern / Clash.Meta / Clash / sing-box / URI 订阅 |在 Web 控制面板生成后提供|
 
-> 检测结果与导出订阅：检测完成后，点击控制面板里的「测速」卡片进入 `/admin/results`，可以筛选、排序本轮节点（协议、服务器、SNI、TLS/UDP、流媒体解锁、速度），并按客户端生成订阅链接。
-> - 只有在控制面板（需要 API 密钥）生成过的格式才能通过 `/export/<格式>` 访问，公开访问不会触发 sub-store 转换
-> - 生成过的格式每轮检测完成后自动更新，程序重启后继续有效；在「导出订阅」中停用后链接失效
-> - 需要启用 sub-store（`sub-store-port`）
-> - 结果快照和生成的订阅保存在配置文件所在目录的 `cache/` 下（Docker 挂载的 `/app/config` 会一并持久化），文件含节点凭据，请勿公开该目录
-
 ## 🗺️ 架构图
 <details>
   <summary>展开查看</summary>
@@ -365,11 +239,7 @@ graph TD
 </details>
 
 ## 🙏 鸣谢
-[cmliu](https://github.com/cmliu)、[Sub-Store](https://github.com/sub-store-org/Sub-Store)、[bestruirui](https://github.com/bestruirui/BestSub)、[1password](https://1password.com/)、[ipinfo.io](https://ipinfo.io/)
-
-## ⭐ Star History
-
-[![Stargazers over time](https://starchart.cc/beck-8/subs-check.svg?variant=adaptive)](https://starchart.cc/beck-8/subs-check)
+原项目作者 [beck-8](https://github.com/beck-8/subs-check)、[cmliu](https://github.com/cmliu)、[Sub-Store](https://github.com/sub-store-org/Sub-Store)、[bestruirui](https://github.com/bestruirui/BestSub)、[1password](https://1password.com/)、[ipinfo.io](https://ipinfo.io/)
 
 ## ⚖️ 免责声明
 

@@ -43,8 +43,8 @@ jobs:
             echo "Merge succeeded without conflicts."
           else
             echo "Conflict detected during merge. Resolving conflicts favoring upstream while protecting custom files..."
-            # 解决冲突：如果是这几个修改文件冲突，优先接受上游主干，稍后由自愈脚本补全自定义字段
-            git checkout --theirs config/config.go config/config.example.yaml utils/notify.go 2>/dev/null || true
+            # 解决冲突：如果是这几个修改文件冲突，优先接受上游主干，稍后由自愈脚本补全自定义字段与个人镜像
+            git checkout --theirs config/config.go config/config.example.yaml utils/notify.go README.md 2>/dev/null || true
             git add .
             git commit -m "chore(sync): resolved conflicts with upstream, preparing patch re-application" || true
           fi
@@ -57,7 +57,7 @@ jobs:
         run: |
           if ! git diff --quiet; then
             echo "Detected custom code adjustments. Committing changes..."
-            git add config/config.go config/config.example.yaml utils/notify.go
+            git add config/config.go config/config.example.yaml utils/notify.go README.md
             git commit -m "feat(tg): auto-protect custom telegram proxy domain and notification logic"
           else
             echo "All custom code already intact and verified."

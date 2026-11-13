@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-自动化自愈与代码保底脚本：
-无论上游 (beck-8/subs-check) 如何更新 config.go、config.example.yaml 或 notify.go，
-本脚本都能智能检测并 100% 自动确保用户的 Telegram 推送与代理域名逻辑绝对保留。
+自动化自愈与代码防冲突保底脚本：
+无论上游 (beck-8/subs-check) 如何更新 config.go、config.example.yaml、notify.go 或 README.md，
+本脚本都能智能检测并 100% 自动确保用户的 Telegram 推送、自定义代理域名逻辑及个人 GHCR 镜像绝对保留！
 """
 
 import os
@@ -15,6 +15,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CONFIG_GO_PATH = os.path.join(BASE_DIR, "config", "config.go")
 CONFIG_YAML_PATH = os.path.join(BASE_DIR, "config", "config.example.yaml")
 NOTIFY_GO_PATH = os.path.join(BASE_DIR, "utils", "notify.go")
+README_PATH = os.path.join(BASE_DIR, "README.md")
 
 def ensure_config_go():
     if not os.path.exists(CONFIG_GO_PATH):
@@ -50,7 +51,6 @@ def ensure_config_go():
             break
 
     if not injected:
-        # 如果以上锚点都找不到（上游极端重构），直接插在 type Config struct { 之后第一行
         struct_pat = r"(type\s+Config\s+struct\s*\{\n)"
         if re.search(struct_pat, content):
             content = re.sub(struct_pat, r"\1" + inject_fields, content, count=1)
@@ -87,11 +87,9 @@ def ensure_config_yaml():
         "proxy-tg: \"\"\n"
     )
 
-    # 尝试在 notify-title 后面插入
     if "notify-title:" in content:
         content = re.sub(r"(notify-title:[^\n]*\n)", r"\1" + yaml_block, content, count=1)
     else:
-        # 否则追加到文件末尾
         content += yaml_block
 
     with open(CONFIG_YAML_PATH, "w", encoding="utf-8") as f:
@@ -111,7 +109,6 @@ def ensure_notify_go():
         print("[OK] utils/notify.go 已包含 SendTelegram 逻辑。")
         return True
 
-    # 准备注入的调用块
     tg_code_block = """
 	// 1. 原生 Telegram 机器人推送 (配置了 telegram-bot-token 和 telegram-chat-id 则触发)
 	if config.GlobalConfig.TelegramBotToken != "" && config.GlobalConfig.TelegramChatID != "" {
@@ -133,14 +130,12 @@ def ensure_notify_go():
 	}
 """
 
-    # 如果有 bodyText 和 titleText 的定义
     func_pattern = r"(func\s+SendNotify\s*\([^\)]*\)\s*\{)"
     match = re.search(func_pattern, content)
     if not match:
         print("[Error] 无法定位 SendNotify 函数")
         return False
 
-    # 检查是否有 bodyText / titleText
     if "bodyText :=" not in content:
         prep_vars = """
 	bodyText := fmt.Sprintf("✅ 可用节点：%d\\n🕒 %s", length, GetCurrentTime())
@@ -150,7 +145,6 @@ def ensure_notify_go():
     else:
         full_inject = tg_code_block
 
-    # 尝试在 SendNotify 开头插入
     content = re.sub(func_pattern, r"\1" + full_inject, content, count=1)
 
     with open(NOTIFY_GO_PATH, "w", encoding="utf-8") as f:
@@ -159,13 +153,58 @@ def ensure_notify_go():
     return True
 
 
+def ensure_readme():
+    if not os.path.exists(README_PATH):
+        print(f"[!] 未找到 {README_PATH}")
+        return False
+    with open(README_PATH, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    changed = False
+
+    # 1. 确保 Docker 镜像指向 xbajiu 的 GHCR 镜像
+    if "ghcr.io/beck-8/subs-check" in content:
+        content = content.replace("ghcr.io/beck-8/subs-check", "ghcr.io/xbajiu/subs-check")
+        changed = True
+
+    # 2. 确保 Telegram 推送章节存在
+    if "telegram-bot-token" not in content:
+        tg_doc = """
+### ✈️ Telegram 原生直接推送（推荐，无需部署 Apprise，支持自定义反代域名）
+
+> **💡 说明：** 类似 CloudFastDDNS 的 Telegram 推送方式，直接填写 Bot Token 与 Chat ID 即可使用；在网络受限环境可配置反向代理域名。
+
+```yaml
+# telegram 机器人 Token (通过 @BotFather 获取)
+telegram-bot-token: "123456789:ABCdefGhIJKlmNoPQRstuVWXyz"
+# 接收通知的 Chat ID (个人 ID 或频道/群组 ID，例如 987654321 或 -100123456789)
+telegram-chat-id: "987654321"
+# TG 推送代理域名 (留空默认使用 https://api.telegram.org；国内环境可配置自建或公共反代)
+proxy-tg: "https://tgproxy.example.com"
+```
+"""
+        if "## 🔔 通知渠道配置（可选）" in content:
+            content = content.replace("## 🔔 通知渠道配置（可选）\n<details>\n  <summary>展开查看</summary>",
+                                      "## 🔔 通知渠道配置（可选）\n<details>\n  <summary>展开查看</summary>\n" + tg_doc)
+            changed = True
+
+    if changed:
+        with open(README_PATH, "w", encoding="utf-8") as f:
+            f.write(content)
+        print("[+] 成功将个人镜像与 TG 文档防冲突自愈至 README.md！")
+    else:
+        print("[OK] README.md 已包含正确的个人镜像与 TG 说明。")
+    return True
+
+
 def main():
-    print("=== 开始执行 TG 推送配置与代码保底自愈检查 ===")
+    print("=== 开始执行全量配置与代码保底自愈检查 ===")
     ok1 = ensure_config_go()
     ok2 = ensure_config_yaml()
     ok3 = ensure_notify_go()
+    ok4 = ensure_readme()
 
-    if ok1 and ok2 and ok3:
+    if ok1 and ok2 and ok3 and ok4:
         print("=== 所有核心关键代码校验完成：100% 存在且完好！ ===")
         sys.exit(0)
     else:
