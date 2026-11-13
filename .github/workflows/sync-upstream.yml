@@ -7,7 +7,7 @@ on:
 
 jobs:
   sync_latest_from_upstream:
-    name: Sync latest commits from upstream repo
+    name: Sync latest commits from upstream repo & protect custom TG features
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,18 +19,47 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch and Merge Upstream
+      - name: Fetch Upstream
         run: |
           git remote add upstream https://github.com/beck-8/subs-check.git || true
           git fetch upstream master
-          echo "Attempting to merge upstream/master into current branch..."
-          git merge upstream/master -m "chore(sync): merge upstream changes from beck-8/subs-check" || {
-            echo "::error::Merge conflict detected! Please check conflicts."
-            exit 1
-          }
+
+      - name: Merge Upstream Changes
+        id: merge_step
+        run: |
+          echo "Merging upstream/master..."
+          # 优先尝试常规合并
+          if git merge upstream/master -m "chore(sync): merge upstream changes from beck-8/subs-check"; then
+            echo "Merge succeeded without conflicts."
+          else
+            echo "Conflict detected during merge. Resolving conflicts favoring upstream while protecting custom files..."
+            # 解决冲突：如果是这几个修改文件冲突，优先接受上游主干，稍后由自愈脚本补全自定义字段
+            git checkout --theirs config/config.go config/config.example.yaml utils/notify.go 2>/dev/null || true
+            git add .
+            git commit -m "chore(sync): resolved conflicts with upstream, preparing patch re-application" || true
+          fi
+
+      - name: Ensure & Re-apply Custom TG Proxy Code
+        run: |
+          python3 scripts/ensure_custom_tg.py
+
+      - name: Commit & Push Protected Changes
+        run: |
+          if ! git diff --quiet; then
+            echo "Detected custom code adjustments. Committing changes..."
+            git add config/config.go config/config.example.yaml utils/notify.go
+            git commit -m "feat(tg): auto-protect custom telegram proxy domain and notification logic"
+          else
+            echo "All custom code already intact and verified."
+          fi
           git push origin master
