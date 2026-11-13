@@ -202,7 +202,22 @@ go run . -f ./config/config.yaml
 <details>
   <summary>展开查看</summary>
 
-> **📦 支持 100+ 通知渠道**，通过 [Apprise](https://github.com/caronc/apprise) 发送通知。
+### ✈️ Telegram 原生直接推送（推荐，无需部署 Apprise，支持自定义反代域名）
+
+> **💡 说明：** 类似 CloudFastDDNS 的 Telegram 推送方式，直接填写 Bot Token 与 Chat ID 即可使用；在网络受限环境可配置反向代理域名。
+
+```yaml
+# telegram 机器人 Token (通过 @BotFather 获取)
+telegram-bot-token: "123456789:ABCdefGhIJKlmNoPQRstuVWXyz"
+# 接收通知的 Chat ID (个人 ID 或频道/群组 ID，例如 987654321 或 -100123456789)
+telegram-chat-id: "987654321"
+# TG 推送代理域名 (留空默认使用 https://api.telegram.org；国内环境可配置自建或公共反代)
+proxy-tg: "https://tgproxy.example.com"
+```
+
+### 📦 Apprise 多渠道通知（支持 100+ 渠道）
+
+> 通过 [Apprise](https://github.com/caronc/apprise) 发送通知。
 
 ### 🌐 Vercel 部署
 

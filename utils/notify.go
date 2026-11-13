@@ -45,6 +45,29 @@ func Notify(request NotifyRequest) error {
 }
 
 func SendNotify(length int) {
+	bodyText := fmt.Sprintf("✅ 可用节点：%d\n🕒 %s", length, GetCurrentTime())
+	titleText := config.GlobalConfig.NotifyTitle
+
+	// 1. 原生 Telegram 机器人推送 (配置了 telegram-bot-token 和 telegram-chat-id 则触发)
+	if config.GlobalConfig.TelegramBotToken != "" && config.GlobalConfig.TelegramChatID != "" {
+		var err error
+		retries := config.GlobalConfig.SubUrlsReTry
+		if retries <= 0 {
+			retries = 3
+		}
+		for i := 0; i < retries; i++ {
+			err = SendTelegram(titleText, bodyText)
+			if err == nil {
+				slog.Info("Telegram 通知发送成功")
+				break
+			}
+		}
+		if err != nil {
+			slog.Error(fmt.Sprintf("Telegram 发送通知失败: %v", err))
+		}
+	}
+
+	// 2. 原版 Apprise 通知渠道
 	if config.GlobalConfig.AppriseApiServer == "" {
 		return
 	} else if len(config.GlobalConfig.RecipientUrl) == 0 {
@@ -55,10 +78,8 @@ func SendNotify(length int) {
 	for _, url := range config.GlobalConfig.RecipientUrl {
 		request := NotifyRequest{
 			URLs: url,
-			Body: fmt.Sprintf("✅ 可用节点：%d\n🕒 %s",
-				length,
-				GetCurrentTime()),
-			Title: config.GlobalConfig.NotifyTitle,
+			Body: bodyText,
+			Title: titleText,
 		}
 		var err error
 		for i := 0; i < config.GlobalConfig.SubUrlsReTry; i++ {
