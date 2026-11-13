@@ -4,7 +4,13 @@ on:
   push:
     tags:
       - 'v*.*.*'
-      
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v2.3.4)'
+        required: false
+        default: ''
+
 permissions:
   contents: write
   packages: write
@@ -14,17 +20,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Tag
+
+      - name: Fetch all tags
         run: git fetch --force --tags
+
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: stable
-      - name: Release
-        uses: goreleaser/goreleaser-action@v4
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: latest
@@ -33,52 +42,43 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
+    needs: releaser
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           tags: |
-            # 如果 tag 包含 "beta"，只生成具体的版本标签
             type=match,pattern=^(.*-beta.*)$,group=1,enable=${{ contains(github.ref_name, 'beta') }}
-            # 如果 tag 不包含 "beta"，生成版本标签
             type=match,pattern=^v(.*)$,group=1,enable=${{ !contains(github.ref_name, 'beta') }}
           flavor: |
-            # 明确控制 latest 标签，只有当不包含 "beta" 时才生成
             latest=${{ !contains(github.ref_name, 'beta') }}
-          
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-        
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-      - name: Build and push
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             VERSION=${{ github.ref_name }}
