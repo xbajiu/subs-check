@@ -2,7 +2,7 @@ name: Sync from Upstream
 
 on:
   schedule:
-    - cron: "0 0 * * *" # 每天自动同步一次上游
+    - cron: "0 0 */5 * *" # 每5天自动同步一次上游
   workflow_dispatch:   # 支持在 GitHub Actions 页面手动点击按钮一键同步
 
 jobs:
